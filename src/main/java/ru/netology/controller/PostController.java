@@ -1,60 +1,50 @@
 package ru.netology.controller;
 
-import com.google.gson.Gson;
+import org.springframework.web.bind.annotation.*;
 import ru.netology.exception.NotFoundException;
 import ru.netology.model.Post;
 import ru.netology.service.PostService;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.Reader;
+import java.util.List;
 
+@RestController
+@RequestMapping("/api/posts")
 public class PostController {
-  public static final String APPLICATION_JSON = "application/json";
   private final PostService service;
 
   public PostController(PostService service) {
     this.service = service;
   }
 
-  public void all(HttpServletResponse response) throws IOException {
-    response.setContentType(APPLICATION_JSON);
-    final var data = service.all();
-    final var gson = new Gson();
-    response.getWriter().print(gson.toJson(data));
+  @GetMapping
+  public List<Post> all() throws IOException {
+    return service.all();
   }
 
-  public void getById(long id, HttpServletResponse response) {
-    try{
-      Post post = this.service.getById(id);
-      final Gson gson = new Gson();
-      String postJson = gson.toJson(post);
-      response.setContentType(APPLICATION_JSON);
-      response.getWriter().write(postJson);
-    }catch (NotFoundException ex){
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } catch (IOException e) {
-      response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  public void save(Reader body, HttpServletResponse response) throws IOException {
+  @GetMapping("/{id}")
+  public Post getById(@PathVariable long id) {
     try {
-      response.setContentType(APPLICATION_JSON);
-      final var gson = new Gson();
-      final var post = gson.fromJson(body, Post.class);
-      final var data = service.save(post);
-      response.getWriter().print(gson.toJson(data));
+      return this.service.getById(id);
     }catch (NotFoundException ex){
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      return null;
     }
   }
 
-  public void removeById(long id, HttpServletResponse response) {
+  @PostMapping
+  public Post save(@RequestBody Post post) {
+    try {
+      return service.save(post);
+    }catch (NotFoundException ex) {
+      return null;
+    }
+  }
+  @DeleteMapping("/{id}")
+  public void removeById(@PathVariable long id) {
     try{
       this.service.removeById(id);
     }catch (NotFoundException ex){
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      ex.printStackTrace();
     }
   }
 }
