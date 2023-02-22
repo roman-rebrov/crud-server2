@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 // Stub
 @Repository
@@ -19,12 +20,17 @@ public class PostRepository {
 
 
   public List<Post> all() {
-    return new ArrayList<Post>(this.posts.values());
+    return new ArrayList<Post>(this.posts.values().stream().filter((Post p) -> {
+      if (!p.isRemoved()){
+        return true;
+      }
+      return false;
+    }).collect(Collectors.toList()));
   }
 
   public Optional<Post> getById(long id) {
 
-    if (this.posts.containsKey(id)) {
+    if (this.posts.containsKey(id) && !this.posts.get(id).isRemoved()) {
       Post post = posts.get(id);
       return Optional.of(post);
     }else {
@@ -40,7 +46,7 @@ public class PostRepository {
       newPost = new Post(newID, post.getContent());
       this.posts.put(newID, newPost);
     }else if(post.getId() > 0L){
-      if (this.posts.containsKey(post.getId())){
+      if (this.posts.containsKey(post.getId()) && !this.posts.get(post.getId()).isRemoved()){
         this.posts.put(post.getId(), post);
         newPost = post;
       }else{
@@ -52,7 +58,7 @@ public class PostRepository {
   }
 
   public void removeById(long id) {
-    if (this.posts.containsKey(id)) {
+    if (this.posts.containsKey(id) && !this.posts.get(id).isRemoved()) {
       posts.remove(id);
     }else {
       throw new NotFoundException("Not found");
